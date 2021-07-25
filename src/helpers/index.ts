@@ -1,0 +1,1 @@
+export const clone = (entity: Object | Array<any>) => JSON.parse(JSON.stringify(entity));
