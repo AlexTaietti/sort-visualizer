@@ -5,6 +5,9 @@ export type Point = {
 
 export type Command = any;
 
-export type SortingAlgo = 'bubble' | 'quick';
+export type ValuableState = {
+   value: number;
+   index: number;
+}
 
-export type State = "idle" | "less" | "bigger" | "equal";
+export type SortingAlgo = 'bubble' | 'quick';

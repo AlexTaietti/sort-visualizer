@@ -1,5 +1,6 @@
 import { Sortee } from "./Sortee";
 import { Point, SortingAlgo } from "../@types";
+import { rad2deg } from "../helpers";
 
 export class Algoritmator {
 
@@ -8,7 +9,7 @@ export class Algoritmator {
    center: Point;
    sortee: Sortee;
 
-   constructor(canvasElement: HTMLCanvasElement, array: Array<number>) {
+   constructor(canvasElement: HTMLCanvasElement, itemsNumber: number) {
 
       const context = canvasElement.getContext('2d');
 
@@ -29,28 +30,13 @@ export class Algoritmator {
          y: canvasHeight / 2
       };
 
-      this.sortee = new Sortee(array);
+      this.sortee = new Sortee(itemsNumber);
 
    }
 
    baseSort(type: SortingAlgo) { type === 'quick' ? this.sortee.quicksort([...this.sortee.baseArray]) : this.sortee.bubbleSort(); }
 
-   animatedSort() {
-
-      const sorted = this.sortee.sortStep();
-
-      this.drawCircles();
-
-      if (sorted) return;
-
-      setTimeout(this.animatedSort.bind(this));
-
-   }
-
-   sort(type: SortingAlgo) {
-      this.baseSort(type);
-      this.animatedSort();
-   }
+   sort(type: SortingAlgo) { this.baseSort(type); }
 
    drawCircles() {
 
@@ -61,12 +47,12 @@ export class Algoritmator {
 
       for (let i = 0; i < valuablesArray.length; i++) {
 
-         const circle = valuablesArray[i];
+         const currentValuable = valuablesArray[i];
 
          this.context.save();
-         this.context.strokeStyle = circle.getColor();
+         this.context.strokeStyle = !currentValuable.sorted ? 'rgb(220, 220, 220)' : 'rgb(0, 220, 0)';
          this.context.translate(this.center.x, this.center.y);
-         this.context.rotate(circle.value / 5);
+         this.context.rotate(rad2deg(currentValuable.value) * 10);
          this.context.beginPath();
          this.context.arc(0, (i * 3) / 2, 3, 0, Math.PI * 2);
          this.context.stroke();
@@ -86,6 +72,18 @@ export class Algoritmator {
 
    clearCanvas() { this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height); }
 
+   update() { this.sortee.update(); }
+
+   animate() {
+
+      this.update();
+
+      this.drawCircles();
+
+      if (!this.sortee.sorted) requestAnimationFrame(this.animate.bind(this));
+
+   }
+
    handleResize() {
 
       const pixelRatio = window.devicePixelRatio;
@@ -100,6 +98,8 @@ export class Algoritmator {
 
       this.canvas.width = canvasWidth;
       this.canvas.height = canvasHeight;
+
+      if (this.sortee.sorted) this.drawCircles();
 
    }
 

@@ -1,21 +1,25 @@
 import { Valuable } from './Valuable';
+import { scramble } from '../helpers';
 
 export class Sortee {
 
-   baseArray: Array<number>;
    valuables: Array<Valuable>;
-   sortInstructions: Array<any> = [];
-   sortInstructionsPointer = 0;
+   baseArray: Array<number>;
+   sortedCount = 0;
+   sorted = false;
 
-   constructor(array: Array<number>) {
-      this.baseArray = array;
-      this.valuables = array.map(value => new Valuable(value))
+   constructor(itemsNumber: number) {
+
+      const array = new Array();
+
+      for (let i = 0; i < itemsNumber; i++) { array.push(i); }
+
+      this.baseArray = scramble(array);
+      this.valuables = this.baseArray.map((value) => new Valuable(value));
+
    }
 
-   createSwapInstruction(thisItemIndex: number, thatItemIndex: number) {
-      const swapCallback = () => this.swap(thisItemIndex, thatItemIndex);
-      this.sortInstructions.push(swapCallback);
-   }
+   swapValuables(thisItemIndex: number, thatItemIndex: number) { this.swap(thisItemIndex, thatItemIndex); }
 
    bubbleSort() {
 
@@ -31,7 +35,7 @@ export class Sortee {
                baseArrayCopy[j] = baseArrayCopy[j + 1];
                baseArrayCopy[j + 1] = temp;
 
-               this.createSwapInstruction(j, j + 1);
+               this.swapValuables(j, j + 1);
 
             }
 
@@ -56,7 +60,7 @@ export class Sortee {
 
          if (i >= j) return j;
 
-         this.createSwapInstruction(i, j);
+         this.swapValuables(i, j);
 
          const temp = array[i];
          array[i] = array[j];
@@ -66,17 +70,25 @@ export class Sortee {
 
    }
 
-   sortStep() {
+   update() {
 
-      const nextInstruction = this.sortInstructions[this.sortInstructionsPointer++];
+      for (let i = 0; i < this.valuables.length; i++) {
 
-      if (nextInstruction) {
-         nextInstruction();
-         return false;
+         const currentValuable = this.valuables[i];
+
+         if (!currentValuable.mutations.length) {
+            if (!currentValuable.sorted) {
+               currentValuable.sorted = true;
+               if (++this.sortedCount === this.valuables.length) this.sorted = true;
+            }
+            continue;
+         }
+
+         if (currentValuable.value !== currentValuable.mutations[0]) { currentValuable.value < currentValuable.mutations[0] ? currentValuable.value += 1 : currentValuable.value -= 1; }
+
+         if (currentValuable.value === currentValuable.mutations[0]) currentValuable.mutations.shift();
+
       }
-
-      this.sortInstructionsPointer = 0;
-      return true;
 
    }
 
@@ -90,38 +102,16 @@ export class Sortee {
 
    }
 
-   compare(thisItem: number, thatItem: number) {
-
-      if (this.valuables[thisItem].value > this.valuables[thatItem].value) {
-
-         this.setBigger(thisItem);
-         this.setLess(thatItem);
-
-      } else if (this.valuables[thisItem].value < this.valuables[thisItem].value) {
-
-         this.setBigger(thatItem);
-         this.setLess(thisItem);
-
-      } else { this.setEqual(thisItem, thatItem); }
-
-   }
-
-   setIdle(thisItem: number, thatItem: number) { this.valuables[thisItem].state = this.valuables[thatItem].state = 'idle'; }
-
-   setEqual(thisItem: number, thatItem: number) { this.valuables[thisItem].state = this.valuables[thatItem].state = 'equal'; }
-
-   setLess(index: number) { this.valuables[index].state = 'less' }
-
-   setBigger(index: number) { this.valuables[index].state = 'bigger' }
-
    swap(itemIndex: number, otherIndex: number) {
 
-      const temporary = this.valuables[itemIndex];
+      const firstValuable = this.valuables[itemIndex];
+      const secondValuable = this.valuables[otherIndex];
 
-      this.valuables[itemIndex] = this.valuables[otherIndex];
-      this.valuables[otherIndex] = temporary;
+      const firstValue = firstValuable.mutations.length ? firstValuable.mutations[firstValuable.mutations.length - 1] : firstValuable.value;
+      const secondValue = secondValuable.mutations.length ? secondValuable.mutations[secondValuable.mutations.length - 1] : secondValuable.value;
 
-      return this;
+      firstValuable.mutations.push(secondValue);
+      secondValuable.mutations.push(firstValue);
 
    }
 
